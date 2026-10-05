@@ -12,15 +12,11 @@
 
 ---
 
-## 🎬 Launch Video (Generated with `/brag`)
-
-Check out the launch teaser created directly from the codebase:
+## 🎬 Preview
 
 <div align="center">
-  <a href="https://github.com/ashu-sa/QuickClip/releases/download/v1.0.0/QuickClip-Launch-Brag.mp4">
-    <img src="assets/video_thumbnail.jpg" alt="QuickClip Launch Video" width="720" style="border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.3);" />
-  </a>
-  <p><em>Click the preview above or <a href="https://github.com/ashu-sa/QuickClip/releases/download/v1.0.0/QuickClip-Launch-Brag.mp4">download QuickClip-Launch-Brag.mp4</a> to watch the 18s high-res demo video.</em></p>
+  <img src="assets/preview.gif" alt="QuickClip Preview Teaser" width="720" />
+  <p><em>Lightning-fast HUD activation with <code>⌥ + Space</code>, drag & drop, lightweight doc stash, and safe deletion.</em></p>
 </div>
 
 ---
@@ -89,6 +85,17 @@ The script compiles the native Swift application, creates the `.app` bundle with
 | **Export Clip** | Click & drag card outward into any external app |
 | **Add Files** | Drag & drop files onto HUD, or click `Browse` |
 | **Exit Selection** | Click `Done` or deselect items |
+
+---
+
+## 🤝 Contributing
+
+Contributions, bug reports, and feature requests are very welcome!
+1. **Fork** the repository.
+2. Create your feature branch (`git checkout -b feature/amazing-feature`).
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`).
+4. Push to the branch (`git push origin feature/amazing-feature`).
+5. Open a **Pull Request (PR)** — we'll review and merge promptly!
 
 ---
 
