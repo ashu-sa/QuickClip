@@ -5,21 +5,104 @@ import UniformTypeIdentifiers
 
 // MARK: - Models
 
-enum ClipItemType {
+enum ClipItemType: Codable {
     case text(String)
     case image(NSImage, URL?)
     case file(URL, String, Int64) // url, filename, fileSizeInBytes
+    
+    enum CodingKeys: String, CodingKey {
+        case kind
+        case textValue
+        case imageRelativePath
+        case fileRelativePath
+        case filename
+        case fileSize
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let kind = try container.decode(String.self, forKey: .kind)
+        switch kind {
+        case "text":
+            let text = try container.decode(String.self, forKey: .textValue)
+            self = .text(text)
+        case "image":
+            let rel = try container.decodeIfPresent(String.self, forKey: .imageRelativePath)
+            if let rel = rel {
+                let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+                let fileURL = appSupport.appendingPathComponent("QuickClipStorage", isDirectory: true).appendingPathComponent(rel)
+                if let img = NSImage(contentsOf: fileURL) {
+                    self = .image(img, fileURL)
+                } else {
+                    self = .image(NSImage(), fileURL)
+                }
+            } else {
+                self = .image(NSImage(), nil)
+            }
+        case "file":
+            let rel = try container.decode(String.self, forKey: .fileRelativePath)
+            let filename = try container.decode(String.self, forKey: .filename)
+            let size = try container.decode(Int64.self, forKey: .fileSize)
+            let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+            let fileURL = appSupport.appendingPathComponent("QuickClipStorage", isDirectory: true).appendingPathComponent(rel)
+            self = .file(fileURL, filename, size)
+        default:
+            self = .text("")
+        }
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        switch self {
+        case .text(let str):
+            try container.encode("text", forKey: .kind)
+            try container.encode(str, forKey: .textValue)
+        case .image(_, let fileURL):
+            try container.encode("image", forKey: .kind)
+            try container.encodeIfPresent(fileURL?.lastPathComponent, forKey: .imageRelativePath)
+        case .file(let url, let filename, let size):
+            try container.encode("file", forKey: .kind)
+            try container.encode(url.lastPathComponent, forKey: .fileRelativePath)
+            try container.encode(filename, forKey: .filename)
+            try container.encode(size, forKey: .fileSize)
+        }
+    }
 }
 
-final class ClipItem: Identifiable, ObservableObject {
-    let id = UUID()
-    let timestamp: Date = Date()
+final class ClipItem: Identifiable, ObservableObject, Codable {
+    let id: UUID
+    let timestamp: Date
     let type: ClipItemType
     @Published var isPinned: Bool = false
     
-    init(type: ClipItemType, isPinned: Bool = false) {
+    enum CodingKeys: String, CodingKey {
+        case id
+        case timestamp
+        case type
+        case isPinned
+    }
+    
+    init(id: UUID = UUID(), timestamp: Date = Date(), type: ClipItemType, isPinned: Bool = false) {
+        self.id = id
+        self.timestamp = timestamp
         self.type = type
         self.isPinned = isPinned
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        self.timestamp = try container.decodeIfPresent(Date.self, forKey: .timestamp) ?? Date()
+        self.type = try container.decode(ClipItemType.self, forKey: .type)
+        self.isPinned = try container.decodeIfPresent(Bool.self, forKey: .isPinned) ?? false
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(timestamp, forKey: .timestamp)
+        try container.encode(type, forKey: .type)
+        try container.encode(isPinned, forKey: .isPinned)
     }
     
     var displayText: String {
@@ -54,6 +137,7 @@ final class ClipboardManager: ObservableObject {
     private var lastChangeCount: Int = 0
     private var timer: Timer?
     private var storageDir: URL
+    private var metadataURL: URL
     private let maxFileSize: Int64 = 5 * 1024 * 1024 // 5 MB maximum
     
     init() {
@@ -61,9 +145,39 @@ final class ClipboardManager: ObservableObject {
         
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         self.storageDir = appSupport.appendingPathComponent("QuickClipStorage", isDirectory: true)
+        self.metadataURL = storageDir.appendingPathComponent("quickclip_history.json")
         try? FileManager.default.createDirectory(at: storageDir, withIntermediateDirectories: true)
         
+        loadItems()
         startMonitoring()
+    }
+    
+    func saveItems() {
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            self?.saveItemsSync()
+        }
+    }
+    
+    func saveItemsSync() {
+        let currentItems = self.items
+        do {
+            let data = try JSONEncoder().encode(currentItems)
+            try data.write(to: self.metadataURL, options: .atomic)
+        } catch {
+            print("Failed to save QuickClip history: \(error)")
+        }
+    }
+    
+    private func loadItems() {
+        guard FileManager.default.fileExists(atPath: metadataURL.path) else { return }
+        do {
+            let data = try Data(contentsOf: metadataURL)
+            let loaded = try JSONDecoder().decode([ClipItem].self, from: data)
+            self.items = loaded
+            sortItems()
+        } catch {
+            print("Failed to load QuickClip history: \(error)")
+        }
     }
     
     func startMonitoring() {
@@ -138,6 +252,7 @@ final class ClipboardManager: ObservableObject {
                 self.items.removeLast()
             }
         }
+        self.saveItems()
     }
     
     private func deleteStoredAsset(for item: ClipItem) {
@@ -227,6 +342,7 @@ final class ClipboardManager: ObservableObject {
         objectWillChange.send()
         item.isPinned.toggle()
         sortItems()
+        saveItems()
     }
     
     private func sortItems() {
@@ -242,6 +358,7 @@ final class ClipboardManager: ObservableObject {
             deleteStoredAsset(for: item)
         }
         items.removeAll { $0.id == id }
+        saveItems()
     }
     
     func removeSelectedItems(ids: Set<UUID>) {
@@ -251,6 +368,7 @@ final class ClipboardManager: ObservableObject {
             }
         }
         items.removeAll { ids.contains($0.id) }
+        saveItems()
     }
     
     func clearAll() {
@@ -258,6 +376,7 @@ final class ClipboardManager: ObservableObject {
             deleteStoredAsset(for: item)
         }
         items.removeAll()
+        saveItems()
     }
 }
 
@@ -1081,6 +1200,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupPanel()
         setupMenuBar()
         setupGlobalHotkey()
+    }
+    
+    func applicationWillTerminate(_ notification: Notification) {
+        ClipboardManager.shared.saveItemsSync()
     }
     
     func setupPanel() {
