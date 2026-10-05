@@ -1,0 +1,10 @@
+Clipboard managers on macOS shouldn't be sluggish web apps or clutter your Dock.
+
+Meet QuickClip: a 100% native Swift & SwiftUI floating clipboard & lightweight document stash.
+⚡️ Summon anywhere with ⌥ + Space
+📎 Multi-format Drag & Drop directly into Slack, IDEs, and browsers
+📌 Pin essential tokens & documents up to 5MB
+🛡 One-tap bulk selection with safe-delete protection
+
+Free, native, and open-source:
+https://github.com/ashu-sa/QuickClip

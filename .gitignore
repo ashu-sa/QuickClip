@@ -1,0 +1,12 @@
+.DS_Store
+QuickClip
+render_screenshot
+render_screenshot.swift
+generate_video
+generate_video.swift
+make_synth_audio.py
+brag-output/work/
+brag-output/audio_track.wav
+dist/
+*.zip
+brag-output/brag.mp4
