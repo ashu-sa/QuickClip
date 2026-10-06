@@ -222,8 +222,7 @@ final class ClipboardManager: ObservableObject {
             }
             
             DispatchQueue.main.async {
-                let firstUnpinnedIndex = self.items.firstIndex(where: { !$0.isPinned }) ?? self.items.count
-                self.items.insert(ClipItem(type: .image(image, fileURL)), at: firstUnpinnedIndex)
+                self.items.insert(ClipItem(type: .image(image, fileURL)), at: 0)
                 self.enforceItemLimit()
             }
             return
@@ -238,8 +237,7 @@ final class ClipboardManager: ObservableObject {
                 return
             }
             DispatchQueue.main.async {
-                let firstUnpinnedIndex = self.items.firstIndex(where: { !$0.isPinned }) ?? self.items.count
-                self.items.insert(ClipItem(type: .text(string)), at: firstUnpinnedIndex)
+                self.items.insert(ClipItem(type: .text(string)), at: 0)
                 self.enforceItemLimit()
             }
         }
@@ -291,8 +289,7 @@ final class ClipboardManager: ObservableObject {
         do {
             try FileManager.default.copyItem(at: originalURL, to: destinationURL)
             DispatchQueue.main.async {
-                let firstUnpinnedIndex = self.items.firstIndex(where: { !$0.isPinned }) ?? self.items.count
-                self.items.insert(ClipItem(type: .file(destinationURL, originalURL.lastPathComponent, size)), at: firstUnpinnedIndex)
+                self.items.insert(ClipItem(type: .file(destinationURL, originalURL.lastPathComponent, size)), at: 0)
                 self.enforceItemLimit()
             }
         } catch {
@@ -346,11 +343,7 @@ final class ClipboardManager: ObservableObject {
     }
     
     private func sortItems() {
-        items.sort { (a, b) -> Bool in
-            if a.isPinned && !b.isPinned { return true }
-            if !a.isPinned && b.isPinned { return false }
-            return a.timestamp > b.timestamp
-        }
+        items.sort { $0.timestamp > $1.timestamp }
     }
     
     func removeItem(id: UUID) {
@@ -665,7 +658,7 @@ struct ContentView: View {
         let baseItems: [ClipItem]
         switch selectedTab {
         case .all:
-            baseItems = clipboard.items
+            baseItems = clipboard.items.filter { !$0.isPinned }
         case .recents:
             baseItems = clipboard.items.filter { !$0.isPinned }
         case .files:
@@ -778,7 +771,7 @@ struct ContentView: View {
             ForEach(TabFilter.allCases, id: \.self) { tab in
                 let count: Int = {
                     switch tab {
-                    case .all: return clipboard.items.count
+                    case .all: return clipboard.items.filter { !$0.isPinned }.count
                     case .recents: return clipboard.items.filter { !$0.isPinned }.count
                     case .files: return clipboard.items.filter {
                         if case .file = $0.type { return true }
