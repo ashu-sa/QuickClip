@@ -120,7 +120,6 @@ enum LayoutMode: String, CaseIterable {
 }
 
 enum TabFilter: String, CaseIterable {
-    case all = "All"
     case recents = "Recents"
     case files = "Files"
     case pinned = "Pinned"
@@ -202,15 +201,7 @@ final class ClipboardManager: ObservableObject {
             return
         }
         
-        // 1. Check for File URLs copied in Finder
-        if let urls = pasteboard.readObjects(forClasses: [NSURL.self], options: nil) as? [URL], !urls.isEmpty {
-            for url in urls {
-                addFile(from: url)
-            }
-            return
-        }
-        
-        // 2. Check for Image / Screenshot
+        // 1. Check for Image / Screenshot (copied images/screenshots go to Recents)
         if let image = NSImage(pasteboard: pasteboard) {
             let fileURL = storageDir.appendingPathComponent("clip_\(UUID().uuidString.prefix(8)).png")
             DispatchQueue.global(qos: .utility).async {
@@ -643,7 +634,7 @@ struct ContentView: View {
     @ObservedObject var clipboard = ClipboardManager.shared
     @State private var searchText: String = ""
     @State private var layoutMode: LayoutMode = .vertical
-    @State private var selectedTab: TabFilter = .all
+    @State private var selectedTab: TabFilter = .recents
     @State private var isTargetedForDrop: Bool = false
     
     // Select / Multi-Select Mode
@@ -657,10 +648,12 @@ struct ContentView: View {
     var filteredItems: [ClipItem] {
         let baseItems: [ClipItem]
         switch selectedTab {
-        case .all:
-            baseItems = clipboard.items.filter { !$0.isPinned }
         case .recents:
-            baseItems = clipboard.items.filter { !$0.isPinned }
+            baseItems = clipboard.items.filter { item in
+                if item.isPinned { return false }
+                if case .file = item.type { return false }
+                return true
+            }
         case .files:
             baseItems = clipboard.items.filter {
                 if case .file = $0.type { return true }
@@ -771,8 +764,11 @@ struct ContentView: View {
             ForEach(TabFilter.allCases, id: \.self) { tab in
                 let count: Int = {
                     switch tab {
-                    case .all: return clipboard.items.filter { !$0.isPinned }.count
-                    case .recents: return clipboard.items.filter { !$0.isPinned }.count
+                    case .recents: return clipboard.items.filter { item in
+                        if item.isPinned { return false }
+                        if case .file = item.type { return false }
+                        return true
+                    }.count
                     case .files: return clipboard.items.filter {
                         if case .file = $0.type { return true }
                         return false
@@ -951,10 +947,10 @@ struct ContentView: View {
                         .multilineTextAlignment(.center)
                         .foregroundColor(.secondary)
                 } else {
-                    Image(systemName: "clipboard")
+                    Image(systemName: "clock")
                         .font(.system(size: 32))
                         .foregroundColor(.secondary.opacity(0.5))
-                    Text(clipboard.items.isEmpty ? "Clipboard is empty.\nCopy text, screenshots, or files!" : "No matches found.")
+                    Text(clipboard.items.isEmpty ? "No recent clips.\nCopy text or screenshots anywhere!" : "No matches found.")
                         .font(.caption)
                         .multilineTextAlignment(.center)
                         .foregroundColor(.secondary)
@@ -1094,11 +1090,17 @@ struct ContentView: View {
             clipsContentList
             Divider()
             
-            // Drop target footer
+            // Footer with contextual hints
             HStack {
-                Text("📁 Drop files to add • Drag items out to export • ⌥+Space")
-                    .font(.system(size: 10))
-                    .foregroundColor(.secondary)
+                if selectedTab == .files {
+                    Text("📁 Drop files here to stash (up to 5MB) • ⌥+Space")
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                } else {
+                    Text("📋 Drag clips out to paste • ⌥+Space")
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                }
                 Spacer()
             }
             .padding(.horizontal, 14)
@@ -1111,10 +1113,11 @@ struct ContentView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(isTargetedForDrop ? Color.accentColor : Color.primary.opacity(0.12), lineWidth: isTargetedForDrop ? 2 : 1)
+                .stroke(isTargetedForDrop && selectedTab == .files ? Color.accentColor : Color.primary.opacity(0.12), lineWidth: isTargetedForDrop && selectedTab == .files ? 2 : 1)
         )
-        // Accept incoming dragged files from Finder
+        // Accept incoming dragged files from Finder only when on Files tab
         .onDrop(of: [.fileURL], isTargeted: $isTargetedForDrop) { providers in
+            guard selectedTab == .files else { return false }
             for provider in providers {
                 _ = provider.loadObject(ofClass: URL.self) { url, _ in
                     if let url = url {
