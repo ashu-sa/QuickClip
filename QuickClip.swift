@@ -162,15 +162,26 @@ final class ClipboardManager: ObservableObject {
         do {
             let data = try JSONEncoder().encode(currentItems)
             try data.write(to: self.metadataURL, options: .atomic)
+            // Keep a safety backup file as well
+            let backupURL = self.storageDir.appendingPathComponent("quickclip_history.backup.json")
+            try? data.write(to: backupURL, options: .atomic)
         } catch {
             print("Failed to save QuickClip history: \(error)")
         }
     }
     
     private func loadItems() {
-        guard FileManager.default.fileExists(atPath: metadataURL.path) else { return }
+        let backupURL = storageDir.appendingPathComponent("quickclip_history.backup.json")
+        var dataToLoad: Data?
+        if FileManager.default.fileExists(atPath: metadataURL.path) {
+            dataToLoad = try? Data(contentsOf: metadataURL)
+        }
+        if dataToLoad == nil && FileManager.default.fileExists(atPath: backupURL.path) {
+            dataToLoad = try? Data(contentsOf: backupURL)
+        }
+        
+        guard let data = dataToLoad else { return }
         do {
-            let data = try Data(contentsOf: metadataURL)
             let loaded = try JSONDecoder().decode([ClipItem].self, from: data)
             self.items = loaded
             sortItems()
@@ -219,7 +230,7 @@ final class ClipboardManager: ObservableObject {
             return
         }
         
-        // 3. Check for Text (cap at 1MB to prevent memory exhaustion)
+        // 2. Check for Text (cap at 1MB to prevent memory exhaustion)
         if let string = pasteboard.string(forType: .string)?.trimmingCharacters(in: .whitespacesAndNewlines), !string.isEmpty {
             if string.count > 500_000 {
                 return // Ignore excessively large text dumps
@@ -234,11 +245,22 @@ final class ClipboardManager: ObservableObject {
         }
     }
     
+    // SAFE EVICTION: Never evict Pinned items or Stored Files. Only evict old unpinned Recents when exceeding limit.
     private func enforceItemLimit() {
-        while self.items.count > 80 {
-            if let last = self.items.last {
-                self.deleteStoredAsset(for: last)
-                self.items.removeLast()
+        let unpinnedRecents = self.items.filter { item in
+            if item.isPinned { return false }
+            if case .file = item.type { return false }
+            return true
+        }
+        
+        if unpinnedRecents.count > 100 {
+            // Find oldest unpinned recents from the end of the list
+            if let oldestRecentIndex = self.items.lastIndex(where: { item in
+                !item.isPinned && { if case .file = item.type { return false }; return true }()
+            }) {
+                let itemToRemove = self.items[oldestRecentIndex]
+                self.deleteStoredAsset(for: itemToRemove)
+                self.items.remove(at: oldestRecentIndex)
             }
         }
         self.saveItems()

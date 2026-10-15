@@ -1,12 +1,23 @@
 <div align="center">
-  <img src="assets/app_logo_transparent.png" alt="QuickClip Logo" width="128" />
-  <h1>QuickClip for macOS</h1>
-  <p><strong>A lightning-fast floating clipboard HUD & lightweight document stash for macOS.</strong></p>
+  <img src="assets/app_logo_transparent.png" alt="QuickClip Logo" width="120" />
+  <h1>QuickClip</h1>
+  <p><strong>A lightning-fast, floating clipboard HUD & lightweight document stash for macOS.</strong></p>
+
   <p>
-    <a href="https://github.com/ashu-sa/QuickClip/releases"><img src="https://img.shields.io/github/v/release/ashu-sa/QuickClip?color=blue&style=flat-square" alt="Release" /></a>
-    <img src="https://img.shields.io/badge/Platform-macOS%2012%2B-blue?style=flat-square" alt="Platform" />
-    <img src="https://img.shields.io/badge/Built%20with-Swift%20%26%20SwiftUI-orange?style=flat-square" alt="Swift" />
-    <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="License" />
+    <a href="https://github.com/ashu-sa/QuickClip/releases"><img src="https://img.shields.io/github/v/release/ashu-sa/QuickClip?color=007AFF&style=flat-square&logo=apple" alt="Latest Release" /></a>
+    <img src="https://img.shields.io/badge/Platform-macOS%2012.0%2B-000000?style=flat-square&logo=apple&logoColor=white" alt="Platform: macOS 12+" />
+    <img src="https://img.shields.io/badge/Built%20with-Swift%20%7C%20SwiftUI-FA7343?style=flat-square&logo=swift&logoColor=white" alt="Swift & SwiftUI" />
+    <img src="https://img.shields.io/badge/Privacy-100%25%20On--Device-success?style=flat-square" alt="Privacy First" />
+    <img src="https://img.shields.io/badge/License-MIT-lightgrey?style=flat-square" alt="License: MIT" />
+  </p>
+
+  <p>
+    <a href="#-preview">Preview</a> •
+    <a href="#-core-features">Features</a> •
+    <a href="#-installation">Installation</a> •
+    <a href="#-shortcuts--gestures">Shortcuts</a> •
+    <a href="#-privacy--architecture">Privacy</a> •
+    <a href="#-contributing">Contributing</a>
   </p>
 </div>
 
@@ -15,25 +26,46 @@
 ## 🎬 Preview
 
 <div align="center">
-  <img src="assets/preview.gif" alt="QuickClip Preview Teaser" width="720" />
-  <p><em>Lightning-fast HUD activation with <code>⌥ + Space</code>, drag & drop, lightweight doc stash, and safe deletion.</em></p>
+  <img src="assets/preview.gif" alt="QuickClip Preview Demonstration" width="760" style="border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.18);" />
+  <p><em>Summon with <kbd>⌥ Option</kbd> + <kbd>Space</kbd> • Instant search • Drag & drop clips outward • Lightweight file stash</em></p>
 </div>
 
 ---
 
-## ✨ Features
+## ✨ Core Features
 
-- ⚡️ **Global Shortcut (`⌥ + Space`)**: Summon or dismiss the floating HUD instantly from anywhere without touching your mouse or interrupting your flow.
-- 🪟 **Floating Glass HUD**: Compact, non-activating floating panel (`LSUIElement`) with zero Dock presence. Lives unobtrusively in your Menu Bar.
-- 📎 **Multi-Format Drag & Drop**: Drag copied text clips or screenshots directly into chat apps (Slack, Discord, WhatsApp), code editors, or browser inputs.
-- 📁 **Lightweight Document Stash**: Drop files or PDFs up to 5MB directly into the window, or browse via macOS Finder.
-- 📌 **Pin Favorites**: Keep your API keys, boilerplate code snippets, and essential documents pinned permanently at the top.
-- 🛡 **Card-Tap Selection & Safe Delete**:
-  - Click any card/snippet to activate selection mode.
-  - Easily **Select All** or pick specific items.
-  - Protected deletion with a confirmation prompt: *"Your paste data will be erased. Continue?"*
-- 🎛 **Flexible Views**: Switch effortlessly between a compact vertical list or a 2-column grid layout.
-- 🔍 **Instant Search**: Filter by text, file name, pinned items, or recent clips.
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>⚡ Instant HUD Access</h3>
+      <p>Summon or dismiss the floating HUD instantly from anywhere via <kbd>⌥ Option</kbd> + <kbd>Space</kbd>. Zero dock presence (<code>LSUIElement</code>) to keep your workspace distraction-free.</p>
+    </td>
+    <td width="50%" valign="top">
+      <h3>📎 Drag & Drop Export</h3>
+      <p>Grab any text snippet or image clip and drag it straight into external applications—Slack, Discord, VS Code, Figma, or web forms—with zero friction.</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>📁 Dedicated Document Stash</h3>
+      <p>Drag files or PDFs (up to 5MB) directly into the <strong>Files</strong> tab for quick staging, or browse your local system through the native macOS file picker.</p>
+    </td>
+    <td width="50%" valign="top">
+      <h3>📌 Smart Pinning & Persistence</h3>
+      <p>Keep frequently used code boilerplate, tokens, and vital documents pinned at the top. All history, pins, and files automatically persist safely across reboots.</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>🛡️ Safe Selection & Pruning</h3>
+      <p>Click any card to trigger batch selection mode with <strong>Select All</strong> capability and confirmation guards (<em>"Your paste data will be erased. Continue?"</em>) to prevent accidental loss.</p>
+    </td>
+    <td width="50%" valign="top">
+      <h3>🔍 Instant Filter & Tab Layouts</h3>
+      <p>Switch seamlessly between <strong>Recents</strong>, <strong>Pinned</strong>, and <strong>Files</strong> tabs with real-time fuzzy text search and flexible list/grid view switching.</p>
+    </td>
+  </tr>
+</table>
 
 ---
 
@@ -42,63 +74,78 @@
 <div align="center">
   <table>
     <tr>
-      <td align="center"><strong>Floating HUD & History</strong></td>
-      <td align="center"><strong>Card Selection & Safe Delete</strong></td>
+      <td align="center"><strong>Floating HUD & History View</strong></td>
+      <td align="center"><strong>Selection Mode & Safe Delete Guard</strong></td>
     </tr>
     <tr>
-      <td><img src="assets/screenshot_main.png" alt="QuickClip Main HUD" width="380" /></td>
-      <td><img src="assets/screenshot_select_mode.png" alt="QuickClip Selection Mode" width="380" /></td>
+      <td><img src="assets/screenshot_main.png" alt="QuickClip Main HUD" width="380" style="border-radius: 6px;" /></td>
+      <td><img src="assets/screenshot_select_mode.png" alt="QuickClip Selection Mode" width="380" style="border-radius: 6px;" /></td>
     </tr>
   </table>
 </div>
 
 ---
 
-## 🚀 Installation & Download
+## 🚀 Installation
 
-### Option 1: Direct Download (Pre-built App)
-Download the latest pre-compiled bundle from the [Releases Page](https://github.com/ashu-sa/QuickClip/releases):
-1. Download `QuickClip-v1.0.0.zip`.
-2. Unzip and drag `QuickClip.app` into your `/Applications` folder.
-3. Open `QuickClip.app` and press `⌥ + Space` (Option + Space) to begin!
+### Option 1: Direct Download (Recommended)
+1. Download the latest `QuickClip-v1.0.0.zip` from the [Releases Page](https://github.com/ashu-sa/QuickClip/releases).
+2. Unzip and drag `QuickClip.app` into your **Applications** folder.
+3. Launch `QuickClip.app` and press <kbd>⌥</kbd> + <kbd>Space</kbd> to start.
 
 ### Option 2: Build from Source
-Requirements: macOS 12+ and Xcode Command Line Tools (`xcode-select --install`).
+> **Requirements**: macOS 12.0+ and Xcode Command Line Tools (`xcode-select --install`).
 
 ```bash
+# Clone the repository
 git clone https://github.com/ashu-sa/QuickClip.git
 cd QuickClip
+
+# Build and sign the native .app bundle
 ./build.sh
 ```
 
-The script compiles the native Swift application, creates the `.app` bundle with high-resolution icons, and signs the binary.
+The script compiles the standalone native Swift binary, bundles the high-resolution app icons, and codesigns the `.app` bundle into `dist/QuickClip.app`.
 
 ---
 
 ## ⌨️ Shortcuts & Gestures
 
-| Action | Shortcut / Gesture |
-|---|---|
-| **Toggle HUD** | `⌥ + Space` (Option + Space) |
-| **Move Window** | Drag the top header or bottom drag footer |
-| **Select Item** | Click any card |
-| **Export Clip** | Click & drag card outward into any external app |
-| **Add Files** | Drag & drop files onto HUD, or click `Browse` |
-| **Exit Selection** | Click `Done` or deselect items |
+| Command / Gesture | Action | Description |
+|:---|:---|:---|
+| <kbd>⌥ Option</kbd> + <kbd>Space</kbd> | **Toggle HUD** | Global system shortcut to summon or dismiss the HUD |
+| **Header / Footer Drag** | **Reposition** | Move the floating HUD anywhere across multiple monitors |
+| **Card Click** | **Select** | Enters item selection mode for batch actions |
+| **Card Drag Outward** | **Export** | Drags clip content directly into any target app |
+| **Drop on Files Tab** | **Stash File** | Adds document or asset (up to 5MB) into persistent storage |
+| <kbd>Esc</kbd> or **Click Outside** | **Dismiss** | Closes the panel without stealing active window focus |
+
+---
+
+## 🔒 Privacy & Architecture
+
+> [!NOTE]
+> **100% On-Device & Zero Telemetry**  
+> QuickClip does not connect to the internet, contains no analytics trackers, and never sends your clipboard data off your machine.
+
+- **Sensitive Data Filtering**: Automatically ignores concealed pasteboard markers (e.g. passwords and secure tokens copied from 1Password, Bitwarden, and Apple Keychain).
+- **Lightweight Footprint**: Engineered in pure Swift and SwiftUI using native AppKit windows (`NSPanel` / `NSVisualEffectView`) for minimal memory usage and zero battery drain.
+- **Resource Discipline**: Built-in disk asset pruning and strict payload constraints safeguard your system storage.
 
 ---
 
 ## 🤝 Contributing
 
-Contributions, bug reports, and feature requests are very welcome!
-1. **Fork** the repository.
-2. Create your feature branch (`git checkout -b feature/amazing-feature`).
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`).
-4. Push to the branch (`git push origin feature/amazing-feature`).
-5. Open a **Pull Request (PR)** — we'll review and merge promptly!
+Contributions, bug reports, and suggestions are welcome!
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feat/amazing-feature`)
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+4. Push to the branch (`git push origin feat/amazing-feature`)
+5. Open a **Pull Request**
 
 ---
 
 ## 📄 License
 
-MIT License. Built with Swift and SwiftUI for macOS.
+Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for more details.
