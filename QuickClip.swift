@@ -137,6 +137,7 @@ final class ClipboardManager: ObservableObject {
     private var timer: Timer?
     private var storageDir: URL
     private var metadataURL: URL
+    private let saveQueue = DispatchQueue(label: "com.quickclip.saveQueue")
     private let maxFileSize: Int64 = 5 * 1024 * 1024 // 5 MB maximum
     
     init() {
@@ -152,15 +153,25 @@ final class ClipboardManager: ObservableObject {
     }
     
     func saveItems() {
-        DispatchQueue.global(qos: .utility).async { [weak self] in
-            self?.saveItemsSync()
+        let snapshot = self.items // Snapshot copied synchronously on calling thread to prevent data races
+        saveQueue.async { [weak self] in
+            guard let self = self else { return }
+            do {
+                let data = try JSONEncoder().encode(snapshot)
+                try data.write(to: self.metadataURL, options: .atomic)
+                // Keep a safety backup file as well
+                let backupURL = self.storageDir.appendingPathComponent("quickclip_history.backup.json")
+                try? data.write(to: backupURL, options: .atomic)
+            } catch {
+                print("Failed to save QuickClip history: \(error)")
+            }
         }
     }
     
     func saveItemsSync() {
-        let currentItems = self.items
+        let snapshot = self.items
         do {
-            let data = try JSONEncoder().encode(currentItems)
+            let data = try JSONEncoder().encode(snapshot)
             try data.write(to: self.metadataURL, options: .atomic)
             // Keep a safety backup file as well
             let backupURL = self.storageDir.appendingPathComponent("quickclip_history.backup.json")
@@ -172,22 +183,28 @@ final class ClipboardManager: ObservableObject {
     
     private func loadItems() {
         let backupURL = storageDir.appendingPathComponent("quickclip_history.backup.json")
-        var dataToLoad: Data?
-        if FileManager.default.fileExists(atPath: metadataURL.path) {
-            dataToLoad = try? Data(contentsOf: metadataURL)
-        }
-        if dataToLoad == nil && FileManager.default.fileExists(atPath: backupURL.path) {
-            dataToLoad = try? Data(contentsOf: backupURL)
-        }
+        let decoder = JSONDecoder()
         
-        guard let data = dataToLoad else { return }
-        do {
-            let loaded = try JSONDecoder().decode([ClipItem].self, from: data)
+        // 1. Attempt loading and decoding primary metadata
+        if FileManager.default.fileExists(atPath: metadataURL.path),
+           let data = try? Data(contentsOf: metadataURL),
+           let loaded = try? decoder.decode([ClipItem].self, from: data) {
             self.items = loaded
             sortItems()
-        } catch {
-            print("Failed to load QuickClip history: \(error)")
+            return
         }
+        
+        // 2. Fallback to backup if primary is missing or corrupted
+        if FileManager.default.fileExists(atPath: backupURL.path),
+           let data = try? Data(contentsOf: backupURL),
+           let loaded = try? decoder.decode([ClipItem].self, from: data) {
+            self.items = loaded
+            sortItems()
+            print("QuickClip: Restored items successfully from backup.")
+            return
+        }
+        
+        print("QuickClip: No valid previous history found to load.")
     }
     
     func startMonitoring() {
